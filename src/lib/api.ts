@@ -156,13 +156,19 @@ export const getLocationName = async (
 };
 
 /**
- * Geocoding to get coordinates from location name
+ * Geocoding to get coordinates from location name (multi-result for live search)
  * @param locationName - Name of the location to search
- * @returns Promise with coordinates
+ * @returns Promise with array of { name, latitude, longitude }
  */
+export interface LocationSuggestion {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
 export const getCoordinatesFromName = async (
   locationName: string
-): Promise<Coordinates | null> => {
+): Promise<LocationSuggestion[]> => {
   try {
     const response = await axios.get(
       "https://nominatim.openstreetmap.org/search",
@@ -170,7 +176,7 @@ export const getCoordinatesFromName = async (
         params: {
           q: locationName,
           format: "json",
-          limit: 1,
+          limit: 5,
         },
         headers: {
           "User-Agent": "Dawn-to-Dusk-Weather-App",
@@ -178,17 +184,18 @@ export const getCoordinatesFromName = async (
         timeout: TIMEOUT,
       }
     );
-    
+
     if (response.data && response.data.length > 0) {
-      return {
-        latitude: parseFloat(response.data[0].lat),
-        longitude: parseFloat(response.data[0].lon),
-      };
+      return response.data.map((item: any) => ({
+        name: item.display_name,
+        latitude: parseFloat(item.lat),
+        longitude: parseFloat(item.lon),
+      }));
     }
-    
-    return null;
+
+    return [];
   } catch (error) {
     console.error("Error geocoding location:", error);
-    return null;
+    return [];
   }
 };

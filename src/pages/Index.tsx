@@ -5,6 +5,11 @@ import { useUserPreferences } from "@/context/UserPreferencesContext";
 import { LocationPermissionModal } from "@/components/LocationPermissionModal";
 import { LocationSearch } from "@/components/LocationSearch";
 import { WeatherIcon } from "@/components/WeatherIcon";
+import { LocationHeader } from "@/components/LocationHeader";
+import { UnitToggles } from "@/components/UnitToggles";
+import { WeatherDetails } from "@/components/WeatherDetails";
+import { ForecastTabs } from "@/components/ForecastTabs";
+import { LastUpdated } from "@/components/LastUpdated";
 import { getLocationName } from "@/lib/api";
 import { 
   formatTemperature, 
@@ -23,7 +28,9 @@ import {
   Umbrella, 
   RefreshCw 
 } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -36,7 +43,7 @@ const Index = () => {
   const [locationError, setLocationErrorState] = useState<boolean>(false);
   
   // Access user preferences
-  const { preferences } = useUserPreferences();
+  const { preferences, setTemperatureUnit, setWindSpeedUnit, setPrecipitationUnit } = useUserPreferences();
   
   // Get geolocation
   const {
@@ -93,6 +100,8 @@ const Index = () => {
   const handleLocationSelected = (lat: number, lon: number, name: string) => {
     setManualCoordinates({ latitude: lat, longitude: lon });
     setLocationName(name);
+    setLocationErrorState(false); // Clear error
+    setShowLocationModal(false); // Hide modal
     toast.success(`Weather for ${name} loaded`);
   };
   
@@ -160,36 +169,20 @@ const Index = () => {
     );
   }
   
-  // Render error state
+  // Always show the location permission modal if geolocation failed and no coordinates are available
   if ((locationErrorMsg || weatherError) && !coordinates) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-destructive/20 to-destructive/40 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4 text-destructive">
-              {locationErrorMsg ? "Location Error" : "Weather Error"}
-            </h2>
-            <p className="mb-6 text-muted-foreground">
-              {locationErrorMsg || weatherError}
-            </p>
-            <Button
-              onClick={locationErrorMsg ? requestGeolocation : refreshWeather}
-              className="mr-2"
-            >
-              Try Again
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowLocationModal(true);
-                setLocationErrorState(true);
-              }}
-            >
-              Search Location
-            </Button>
-          </div>
-        </div>
-      </div>
+      <>
+        <div className="min-h-screen bg-gradient-to-b from-destructive/20 to-destructive/40 flex items-center justify-center" />
+        <LocationPermissionModal
+          open={true}
+          onClose={() => {}}
+          onAllow={requestGeolocation}
+          onDeny={() => {}}
+          onManualLocation={handleLocationSelected}
+          showError={true}
+        />
+      </>
     );
   }
   
@@ -204,188 +197,52 @@ const Index = () => {
   const hourlyForecast = weatherData.hourly;
   
   return (
-    <div className={`min-h-screen ${backgroundClass} transition-all duration-500 text-white`}>
-      <div className="container max-w-md mx-auto px-4 py-8 flex flex-col min-h-screen">
-        {/* Location header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">{locationName}</h1>
-            <p className="text-sm opacity-80">
-              {formatFullDate(new Date().toISOString())}
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRefresh}
-            className="text-white hover:bg-white/20"
-          >
-            <RefreshCw className="h-5 w-5" />
-          </Button>
-        </div>
-        
-        {/* Location search */}
-        <LocationSearch 
-          onLocationSelected={handleLocationSelected} 
-          className="mb-6"
-        />
-        
-        {/* Current weather */}
-        <div className="text-center my-8 animate-fade-in">
-          <WeatherIcon 
-            condition={weatherCondition}
-            isDay={isDay}
-            size={96}
-            className="mb-4 mx-auto"
+    <>
+      <div className={`min-h-screen ${backgroundClass} transition-all duration-500 text-gray-900 dark:text-gray-100 bg-gradient-to-br from-blue-100 via-white to-blue-200 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800`}>
+        <div className="container max-w-lg mx-auto mt-8 mb-8 px-4 py-8 flex flex-col gap-8 dark:bg-gray-900/80 backdrop-blur-lg transition-colors duration-500">
+          <LocationHeader
+            locationName={locationName}
           />
-          <h2 className="text-6xl font-bold mb-2">
-            {formatTemperature(
-              currentWeather.temperature, 
-              preferences.temperatureUnit
-            )}
-          </h2>
-          <p className="text-xl opacity-90 capitalize">
-            {weatherCondition.replace("-", " ")}
-          </p>
+          <div className="flex items-center mb-6 gap-2">
+            <LocationSearch 
+              onLocationSelected={handleLocationSelected} 
+              className="flex-1"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              aria-label="Refresh weather"
+              className="h-12 w-12 sm:h-10 sm:w-10"
+            >
+              <RefreshCw className="h-5 w-5 text-gray-700 dark:text-gray-100" />
+            </Button>
+          </div>
+          <WeatherDetails
+            currentWeather={currentWeather}
+            hourlyForecast={hourlyForecast}
+            currentHourIndex={currentHourIndex}
+            temperatureUnit={preferences.temperatureUnit}
+            windSpeedUnit={preferences.windSpeedUnit}
+          />
+
+          <UnitToggles
+            temperatureUnit={preferences.temperatureUnit}
+            windSpeedUnit={preferences.windSpeedUnit}
+            precipitationUnit={preferences.precipitationUnit}
+            setTemperatureUnit={setTemperatureUnit}
+            setWindSpeedUnit={setWindSpeedUnit}
+            setPrecipitationUnit={setPrecipitationUnit}
+          />
+          <ForecastTabs
+            dailyForecast={dailyForecast}
+            hourlyForecast={hourlyForecast}
+            currentHourIndex={currentHourIndex}
+            preferences={preferences}
+          />
+          <LastUpdated lastUpdated={lastUpdated} />
         </div>
-        
-        {/* Weather details */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white/20 backdrop-blur-md rounded-lg p-4 flex flex-col items-center animate-slide-up">
-            <Thermometer className="h-6 w-6 mb-1" />
-            <span className="text-xs opacity-80">Feels like</span>
-            <span className="font-bold">
-              {formatTemperature(
-                currentWeather.temperature, 
-                preferences.temperatureUnit
-              )}
-            </span>
-          </div>
-          
-          <div className="bg-white/20 backdrop-blur-md rounded-lg p-4 flex flex-col items-center animate-slide-up" style={{ animationDelay: "100ms" }}>
-            <Droplets className="h-6 w-6 mb-1" />
-            <span className="text-xs opacity-80">Humidity</span>
-            <span className="font-bold">
-              {hourlyForecast.relativehumidity_2m[currentHourIndex]}%
-            </span>
-          </div>
-          
-          <div className="bg-white/20 backdrop-blur-md rounded-lg p-4 flex flex-col items-center animate-slide-up" style={{ animationDelay: "200ms" }}>
-            <Wind className="h-6 w-6 mb-1" />
-            <span className="text-xs opacity-80">Wind</span>
-            <span className="font-bold">
-              {currentWeather.windspeed} km/h
-            </span>
-          </div>
-        </div>
-        
-        {/* Forecast tabs */}
-        <Tabs defaultValue="hourly" className="animate-fade-in">
-          <TabsList className="grid grid-cols-2 mb-4 bg-white/20 backdrop-blur-md">
-            <TabsTrigger value="hourly">Hourly</TabsTrigger>
-            <TabsTrigger value="daily">7 Days</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="hourly" className="mt-0">
-            <Card className="bg-white/20 backdrop-blur-md border-none">
-              <div className="overflow-x-auto p-4">
-                <div className="flex gap-4">
-                  {hourlyForecast.time.slice(currentHourIndex, currentHourIndex + 24).map((time, index) => {
-                    const i = currentHourIndex + index;
-                    const weatherCode = hourlyForecast.weathercode[i];
-                    const condition = mapWeatherCode(weatherCode);
-                    const isHourDay = hourlyForecast.is_day[i] === 1;
-                    
-                    return (
-                      <div 
-                        key={time} 
-                        className="flex flex-col items-center min-w-14"
-                      >
-                        <span className="text-xs opacity-80">
-                          {index === 0 ? "Now" : formatHour(time)}
-                        </span>
-                        <WeatherIcon 
-                          condition={condition}
-                          isDay={isHourDay}
-                          size={28}
-                          className="my-2"
-                        />
-                        <span className="text-sm font-medium">
-                          {Math.round(hourlyForecast.temperature_2m[i])}°
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="daily" className="mt-0">
-            <Card className="bg-white/20 backdrop-blur-md border-none">
-              <div className="divide-y divide-white/10">
-                {dailyForecast.time.map((day, index) => {
-                  const condition = mapWeatherCode(dailyForecast.weathercode[index]);
-                  
-                  return (
-                    <div 
-                      key={day}
-                      className="flex items-center justify-between p-4"
-                    >
-                      <div className="flex items-center">
-                        <div className="w-10">
-                          <WeatherIcon 
-                            condition={condition}
-                            isDay={true}
-                            size={24}
-                          />
-                        </div>
-                        <span className={`ml-2 ${index === 0 ? "font-medium" : ""}`}>
-                          {index === 0 ? "Today" : formatDay(day)}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <Umbrella className="h-4 w-4 mr-1 text-blue-300" />
-                        <span className="text-xs mr-4">
-                          {dailyForecast.precipitation_probability_max[index]}%
-                        </span>
-                        
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm opacity-80">
-                            {Math.round(dailyForecast.temperature_2m_min[index])}°
-                          </span>
-                          <div className="w-16 h-1 rounded-full bg-white/50">
-                            <div 
-                              className="h-full rounded-full bg-white"
-                              style={{ 
-                                width: `${(dailyForecast.temperature_2m_max[index] - dailyForecast.temperature_2m_min[index]) / 
-                                        (Math.max(...dailyForecast.temperature_2m_max) - Math.min(...dailyForecast.temperature_2m_min)) * 100}%` 
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm font-bold">
-                            {Math.round(dailyForecast.temperature_2m_max[index])}°
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
-        
-        {/* Last updated */}
-        {lastUpdated && (
-          <div className="mt-auto pt-6 text-center text-xs opacity-70 flex items-center justify-center">
-            <Clock className="h-3 w-3 mr-1" />
-            Last updated: {lastUpdated.toLocaleTimeString()}
-          </div>
-        )}
       </div>
-      
       {/* Location permission modal */}
       <LocationPermissionModal
         open={showLocationModal}
@@ -395,8 +252,9 @@ const Index = () => {
         onManualLocation={handleLocationSelected}
         showError={locationError}
       />
-    </div>
+  </>
   );
 };
 
 export default Index;
+  

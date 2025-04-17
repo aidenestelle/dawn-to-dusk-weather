@@ -1,73 +1,75 @@
-# Welcome to your Lovable project
+# Dawn to Dusk Weather App
 
-## Project info
+A modern, responsive weather application providing detailed current, hourly, and daily forecasts with a beautiful and informative UI.
 
-**URL**: https://lovable.dev/projects/a63d508a-a239-4628-9bce-e48f6f6c4864
+## Features
 
-## How can I edit this code?
+- **Current Weather**: Prominent display of current conditions, temperature, feels-like, wind, humidity, and precipitation.
+- **Hourly Forecast**:
+  - Vertical, scrollable list starting from the current hour
+  - Each card shows time (12h format), weather icon, temperature, precipitation probability, wind, humidity, and feels-like
+  - Optimized layout for mobile and desktop
+  - Current hour is visually highlighted
+- **Daily Forecast**:
+  - 7-day outlook with detailed cards
+- **Search Functionality**:
+  - Search for any city/location
+  - Search bar and dropdown fully themed for light and dark mode
+  - Recent searches and suggestions
+- **Unit Preferences**:
+  - Toggle between Celsius/Fahrenheit and km/h/mph
+  - Precipitation automatically shown in mm (metric) or inches (imperial)
+- **Dark Mode**: Fully responsive and visually tuned for both light and dark themes
+- **Accessibility**: Keyboard and screen reader friendly, with clear focus and hover states
 
-There are several ways of editing your application.
+## Tech Stack
+- **React** (TypeScript)
+- **Vite** (build tooling)
+- **Tailwind CSS** (utility-first styling)
+- **shadcn-ui** (UI components)
+- **Lucide-react** (icons)
+- **Axios** (API requests)
+- **Sonner** (toast notifications)
 
-**Use Lovable**
+## Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a63d508a-a239-4628-9bce-e48f6f6c4864) and start prompting.
+### Prerequisites
+- Node.js (18+ recommended)
+- npm or yarn
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
+### Installation
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+ git clone <your-repo-url>
+ cd dawn-to-dusk-weather
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install dependencies
+ npm install
+# or
+yarn install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Start the development server
+ npm run dev
+# or
+yarn dev
 ```
 
-**Edit a file directly in GitHub**
+Open [http://localhost:5173](http://localhost:5173) to view the app in your browser.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Customization
+- **API Keys**: If using a weather API that requires a key, add your key to the appropriate `.env` file and update the API logic in `src/lib/api.ts`.
+- **Styling**: Tailwind and component classes can be easily customized in each component file.
+- **Units**: The app auto-detects and toggles units based on user preference.
 
-**Use GitHub Codespaces**
+## Deployment
+- The app is ready for deployment with Vite. You can deploy to Vercel, Netlify, or any static hosting provider.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Contributing
+Pull requests are welcome! For major changes, open an issue first to discuss what you would like to change.
 
-## What technologies are used for this project?
+## License
+MIT
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/a63d508a-a239-4628-9bce-e48f6f6c4864) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+*Built with ❤️ for weather enthusiasts.*

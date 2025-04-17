@@ -3,6 +3,8 @@ import { createContext, useState, useContext, useEffect, ReactNode } from "react
 
 interface UserPreferences {
   temperatureUnit: "celsius" | "fahrenheit";
+  windSpeedUnit: "kmh" | "mph";
+  precipitationUnit: "mm" | "in";
   animationsEnabled: boolean;
   lastSearchedLocations: string[];
 }
@@ -10,6 +12,8 @@ interface UserPreferences {
 interface UserPreferencesContextType {
   preferences: UserPreferences;
   setTemperatureUnit: (unit: "celsius" | "fahrenheit") => void;
+  setWindSpeedUnit: (unit: "kmh" | "mph") => void;
+  setPrecipitationUnit: (unit: "mm" | "in") => void;
   toggleAnimations: () => void;
   addSearchedLocation: (location: string) => void;
   removeSearchedLocation: (location: string) => void;
@@ -19,6 +23,8 @@ interface UserPreferencesContextType {
 // Default preferences
 const defaultPreferences: UserPreferences = {
   temperatureUnit: "celsius",
+  windSpeedUnit: "kmh",
+  precipitationUnit: "mm",
   animationsEnabled: true,
   lastSearchedLocations: [],
 };
@@ -59,6 +65,16 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
   const setTemperatureUnit = (unit: "celsius" | "fahrenheit") => {
     setPreferences(prev => ({ ...prev, temperatureUnit: unit }));
   };
+
+  // Set wind speed unit preference
+  const setWindSpeedUnit = (unit: "kmh" | "mph") => {
+    setPreferences(prev => ({ ...prev, windSpeedUnit: unit }));
+  };
+
+  // Set precipitation unit preference
+  const setPrecipitationUnit = (unit: "mm" | "in") => {
+    setPreferences(prev => ({ ...prev, precipitationUnit: unit }));
+  };
   
   // Toggle animations
   const toggleAnimations = () => {
@@ -97,6 +113,8 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
   const value = {
     preferences,
     setTemperatureUnit,
+    setWindSpeedUnit,
+    setPrecipitationUnit,
     toggleAnimations,
     addSearchedLocation,
     removeSearchedLocation,
@@ -111,6 +129,7 @@ export const UserPreferencesProvider = ({ children }: { children: ReactNode }) =
 };
 
 // Custom hook to use the preferences context
+// Export updated context with new setters
 export const useUserPreferences = (): UserPreferencesContextType => {
   const context = useContext(UserPreferencesContext);
   if (context === undefined) {

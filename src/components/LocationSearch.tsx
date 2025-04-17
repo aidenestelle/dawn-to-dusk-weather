@@ -1,10 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDebounce } from "use-debounce";
 import { Search, X, MapPin, History, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getCoordinatesFromName } from "@/lib/api";
+import { getCoordinatesFromName, LocationSuggestion } from "@/lib/api";
 import { useUserPreferences } from "@/context/UserPreferencesContext";
 
 interface LocationSearchProps {
@@ -12,16 +12,21 @@ interface LocationSearchProps {
   className?: string;
 }
 
+import { useRef } from "react";
+
 export function LocationSearch({
   onLocationSelected,
   className = "",
 }: LocationSearchProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery] = useDebounce(searchQuery, 500);
-  const [suggestions, setSuggestions] = useState<Array<{ name: string; lat: number; lon: number }>>([]);
+  const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const { preferences, addSearchedLocation } = useUserPreferences();
+  const { preferences, addSearchedLocation, clearSearchHistory } = useUserPreferences();
+
+  // Ref for click-away
+  const searchRef = useRef<HTMLDivElement>(null);
 
   // Search for locations when query changes
   const searchLocations = async (query: string) => {
@@ -33,27 +38,16 @@ export function LocationSearch({
 
     setIsSearching(true);
     try {
-      // Use the Nominatim API via our utility function
-      const coords = await getCoordinatesFromName(query);
-      if (coords) {
-        // For simplicity, we're just setting one result
-        // A real implementation would show multiple suggestions
-        setSuggestions([
-          {
-            name: query,
-            lat: coords.latitude,
-            lon: coords.longitude,
-          },
-        ]);
-      } else {
-        setSuggestions([]);
-      }
+      const results = await getCoordinatesFromName(query);
+      console.log('Location search results for', query, results);
+      setSuggestions(results);
     } catch (error) {
       console.error("Error searching locations:", error);
       setSuggestions([]);
     }
     setIsSearching(false);
   };
+
 
   // Handle search query changes
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,14 +61,14 @@ export function LocationSearch({
   };
 
   // Handle location selection
-  const handleLocationSelect = (name: string, lat: number, lon: number) => {
+  const handleLocationSelect = (name: string, latitude: number, longitude: number) => {
     setSearchQuery(name);
     setShowSuggestions(false);
     setSuggestions([]);
     // Add to search history
     addSearchedLocation(name);
     // Notify parent component
-    onLocationSelected(lat, lon, name);
+    onLocationSelected(latitude, longitude, name);
   };
 
   // Clear search input
@@ -93,23 +87,39 @@ export function LocationSearch({
   };
 
   // Search based on debounced query
-  useState(() => {
+  useEffect(() => {
     if (debouncedQuery) {
       searchLocations(debouncedQuery);
     }
-  });
+  }, [debouncedQuery]);
+
+  // Click-away to close suggestions
+  useEffect(() => {
+    if (!showSuggestions) return;
+    function handleClick(event: MouseEvent | TouchEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("touchstart", handleClick);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("touchstart", handleClick);
+    };
+  }, [showSuggestions]);
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={searchRef} className={`relative w-full ${className}`}>
       <form onSubmit={handleSubmit} className="relative">
-        <div className="relative flex items-center">
+        <div className="relative flex items-center w-full">
           <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search for a location..."
             value={searchQuery}
             onChange={handleSearchChange}
             onFocus={() => setShowSuggestions(true)}
-            className="pl-10 pr-10"
+            className="pl-10 pr-10 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-white dark:bg-gray-800"
           />
           {searchQuery && (
             <button
@@ -125,7 +135,7 @@ export function LocationSearch({
 
       {/* Suggestions dropdown */}
       {showSuggestions && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-popover shadow-md rounded-md z-10 max-h-60 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-popover dark:bg-gray-900 shadow-md rounded-md z-10 max-h-60 overflow-y-auto min-w-[200px] sm:min-w-[300px] w-full">
           {isSearching ? (
             <div className="flex items-center justify-center p-4">
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -139,16 +149,16 @@ export function LocationSearch({
                   {suggestions.map((suggestion, index) => (
                     <button
                       key={`suggestion-${index}`}
-                      className="w-full text-left px-4 py-3 flex items-center hover:bg-muted transition-colors"
-                      onClick={() => handleLocationSelect(suggestion.name, suggestion.lat, suggestion.lon)}
+                      className="w-full text-left px-4 py-3 flex items-center hover:bg-muted dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-gray-100"
+                      onClick={() => handleLocationSelect(suggestion.name, suggestion.latitude, suggestion.longitude)}
                     >
-                      <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                      <MapPin className="h-4 w-4 mr-2 flex-shrink-0 text-gray-700" />
                       <span className="truncate">{suggestion.name}</span>
                     </button>
                   ))}
                 </div>
               ) : debouncedQuery && debouncedQuery.length > 1 ? (
-                <div className="p-4 text-center text-muted-foreground">
+                <div className="p-4 text-center text-gray-900 dark:text-gray-100">
                   No locations found
                 </div>
               ) : null}
@@ -177,7 +187,7 @@ export function LocationSearch({
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      // Clear search history functionality would go here
+                      clearSearchHistory();
                     }}
                     className="w-full justify-start px-4 py-2 h-auto font-normal text-muted-foreground hover:text-foreground"
                   >
