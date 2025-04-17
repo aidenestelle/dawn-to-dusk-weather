@@ -96,40 +96,48 @@ export const ForecastTabs: React.FC<ForecastTabsProps> = ({ dailyForecast, hourl
               return (
                 <div
                   key={time}
-                  className={`flex flex-col sm:flex-row items-center justify-between p-3 sm:p-4 gap-3 sm:gap-0 transition-all duration-200 rounded-xl animate-slide-in border border-transparent sm:border-0 shadow-none sm:shadow-md bg-white/80 dark:bg-gray-900/40 sm:bg-inherit sm:dark:bg-inherit
+                  className={`flex flex-col sm:flex-row items-center justify-between p-3 sm:p-5 gap-3 sm:gap-6 transition-all duration-200 rounded-xl animate-slide-in border border-transparent sm:border sm:border-blue-100 dark:sm:border-blue-900/40 shadow-none sm:shadow-lg bg-white/80 dark:bg-gray-900/40 sm:bg-gradient-to-br sm:from-white/70 sm:to-blue-50/40 sm:dark:from-gray-800/80 sm:dark:to-blue-900/30
                     ${isCurrent ? 'bg-blue-100 dark:bg-blue-900/60 shadow-md font-bold ring-2 ring-blue-400' : 'hover:bg-blue-50/40 dark:hover:bg-blue-900/20'}
                   `}
                   role="listitem"
                   aria-current={isCurrent ? 'true' : undefined}
                 >
-                  {/* Top: Time, Icon, Temp (mobile stacked, desktop inline) */}
-                  <div className="flex flex-row sm:flex-col items-center sm:items-start w-full sm:w-auto gap-3 sm:gap-0 mb-2 sm:mb-0">
-                    <span className="text-lg sm:text-sm font-semibold opacity-90 dark:text-gray-100 w-20 sm:w-12 text-center">
+                  {/* Mobile: stacked, Desktop: horizontal layout */}
+                  {/* Time & Icon */}
+                  <div className="flex flex-row sm:flex-col items-center sm:items-center w-full sm:w-24 gap-2 sm:gap-2 mb-2 sm:mb-0">
+                    <span className="text-lg sm:text-base font-semibold opacity-90 dark:text-gray-100 w-20 sm:w-full text-center">
                       {new Date(time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
                     </span>
-                    <WeatherIcon condition={condition} isDay={true} size={36} />
-                    <span className="text-2xl sm:text-lg font-bold ml-2 sm:ml-0">
-                      {Math.round(hourlyForecast.temperature_2m[index])}°
-                    </span>
+                    <WeatherIcon condition={condition} isDay={true} size={40} />
                   </div>
-                  {/* Bottom: Details (stacked on mobile, row on desktop) */}
-                  <div className="flex flex-wrap sm:flex-row items-center gap-x-4 gap-y-2 sm:gap-4 flex-1 justify-center">
-                    <span className="flex items-center text-xs gap-1 opacity-90">
-                      <Umbrella className="h-4 w-4 text-blue-400 mr-1" />
-                      <span className="w-10">{hourlyForecast.precipitation_probability ? `${hourlyForecast.precipitation_probability[index]}%` : '-'}</span>
+                  {/* Temp (large on desktop) */}
+                  <span className="text-2xl sm:text-4xl font-extrabold text-blue-800 dark:text-blue-200 mx-2 sm:mx-0">
+                    {Math.round(hourlyForecast.temperature_2m[index])}°
+                  </span>
+                  {/* Details */}
+                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-2 gap-y-2 sm:gap-x-6 flex-1 justify-center sm:justify-end">
+                    {/* Precipitation Probability as badge */}
+                    <span className="flex items-center text-xs gap-1">
+                      <span className="bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-200 px-2 py-1 rounded-full font-semibold">
+                        <Umbrella className="h-4 w-4 inline-block mr-1 -mt-0.5" />
+                        {hourlyForecast.precipitation_probability ? `${hourlyForecast.precipitation_probability[index]}%` : '-'}
+                      </span>
                     </span>
+                    {/* Wind */}
                     <span className="flex items-center text-xs gap-1 opacity-90">
                       <Wind className="h-4 w-4 text-blue-500 mr-1" />
                       <span className="w-14">{preferences.windSpeedUnit === 'kmh'
                         ? `${hourlyForecast.windspeed_10m[index]} km/h`
                         : `${(hourlyForecast.windspeed_10m[index] * 0.621371).toFixed(1)} mph`}</span>
                     </span>
+                    {/* Humidity */}
                     {hourlyForecast.humidity && (
                       <span className="flex items-center text-xs gap-1 opacity-90">
                         <span className="inline-block w-4 h-4 bg-gradient-to-tr from-blue-300 to-blue-600 rounded-full mr-1" title="Humidity" />
                         <span className="w-8">{hourlyForecast.humidity[index]}%</span>
                       </span>
                     )}
+                    {/* Feels Like */}
                     {hourlyForecast.apparent_temperature && (
                       <span className="flex items-center text-xs gap-1 opacity-90">
                         <span className="inline-block w-4 h-4 bg-gradient-to-tr from-orange-200 to-orange-400 rounded-full mr-1" title="Feels Like" />

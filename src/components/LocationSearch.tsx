@@ -173,10 +173,20 @@ export function LocationSearch({
                     <button
                       key={`recent-${index}`}
                       className="w-full text-left px-4 py-2 flex items-center hover:bg-muted transition-colors"
-                      onClick={() => {
+                      onClick={async () => {
                         setSearchQuery(location);
                         setShowSuggestions(false);
-                        searchLocations(location);
+                        setIsSearching(true);
+                        try {
+                          const results = await getCoordinatesFromName(location);
+                          if (results && results.length > 0) {
+                            const { latitude, longitude, name } = results[0];
+                            addSearchedLocation(name);
+                            onLocationSelected(latitude, longitude, name);
+                          }
+                        } finally {
+                          setIsSearching(false);
+                        }
                       }}
                     >
                       <History className="h-3 w-3 mr-2 text-muted-foreground flex-shrink-0" />
