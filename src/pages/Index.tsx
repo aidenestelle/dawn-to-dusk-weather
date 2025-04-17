@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { useWeather } from "@/hooks/use-weather";
@@ -28,11 +27,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 const Index = () => {
   // State for location name
   const [locationName, setLocationName] = useState<string>("Loading location...");
   const [showLocationModal, setShowLocationModal] = useState<boolean>(false);
+  const [locationError, setLocationErrorState] = useState<boolean>(false);
   
   // Access user preferences
   const { preferences } = useUserPreferences();
@@ -41,7 +42,7 @@ const Index = () => {
   const {
     coordinates,
     loading: locationLoading,
-    error: locationError,
+    error: locationErrorMsg,
     requestGeolocation,
     setManualCoordinates,
     hasRequestedBefore
@@ -61,8 +62,15 @@ const Index = () => {
     // Show the modal if we don't have coordinates and haven't requested before
     if (!coordinates && !locationLoading && !hasRequestedBefore()) {
       setShowLocationModal(true);
+      setLocationErrorState(false);
     }
-  }, [coordinates, locationLoading, hasRequestedBefore]);
+    
+    // Show error modal if there's a location error
+    if (locationErrorMsg && !coordinates) {
+      setShowLocationModal(true);
+      setLocationErrorState(true);
+    }
+  }, [coordinates, locationLoading, locationErrorMsg, hasRequestedBefore]);
   
   // Get location name when coordinates change
   useEffect(() => {
@@ -85,11 +93,13 @@ const Index = () => {
   const handleLocationSelected = (lat: number, lon: number, name: string) => {
     setManualCoordinates({ latitude: lat, longitude: lon });
     setLocationName(name);
+    toast.success(`Weather for ${name} loaded`);
   };
   
   // Handle refresh button click
   const handleRefresh = () => {
     refreshWeather();
+    toast.info("Weather information refreshed");
   };
   
   // Get weather condition and background
@@ -151,26 +161,29 @@ const Index = () => {
   }
   
   // Render error state
-  if (locationError || weatherError) {
+  if ((locationErrorMsg || weatherError) && !coordinates) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-destructive/20 to-destructive/40 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4 text-destructive">
-              {locationError ? "Location Error" : "Weather Error"}
+              {locationErrorMsg ? "Location Error" : "Weather Error"}
             </h2>
             <p className="mb-6 text-muted-foreground">
-              {locationError || weatherError}
+              {locationErrorMsg || weatherError}
             </p>
             <Button
-              onClick={locationError ? requestGeolocation : refreshWeather}
+              onClick={locationErrorMsg ? requestGeolocation : refreshWeather}
               className="mr-2"
             >
               Try Again
             </Button>
             <Button
               variant="outline"
-              onClick={() => setShowLocationModal(true)}
+              onClick={() => {
+                setShowLocationModal(true);
+                setLocationErrorState(true);
+              }}
             >
               Search Location
             </Button>
@@ -280,7 +293,7 @@ const Index = () => {
                   {hourlyForecast.time.slice(currentHourIndex, currentHourIndex + 24).map((time, index) => {
                     const i = currentHourIndex + index;
                     const weatherCode = hourlyForecast.weathercode[i];
-                                        const condition = mapWeatherCode(weatherCode);
+                    const condition = mapWeatherCode(weatherCode);
                     const isHourDay = hourlyForecast.is_day[i] === 1;
                     
                     return (
@@ -379,6 +392,8 @@ const Index = () => {
         onClose={() => setShowLocationModal(false)}
         onAllow={requestGeolocation}
         onDeny={() => setShowLocationModal(false)}
+        onManualLocation={handleLocationSelected}
+        showError={locationError}
       />
     </div>
   );

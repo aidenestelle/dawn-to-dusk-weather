@@ -32,7 +32,7 @@ export const useWeather = (
       setState(prev => ({
         ...prev,
         loading: false,
-        error: "No location coordinates available",
+        error: "No location coordinates available. Please add a location to see weather data.",
       }));
       return;
     }
@@ -61,6 +61,12 @@ export const useWeather = (
   useEffect(() => {
     if (coordinates) {
       refreshWeather();
+    } else {
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: "No location selected. Please choose a location to see weather data."
+      }));
     }
   }, [coordinates, tempUnit]);
   
